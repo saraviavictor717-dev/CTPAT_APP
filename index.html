@@ -363,7 +363,19 @@ function cargarFoto(id, input) {
   reader.onload = e => {
     const img = new Image();
     img.onload = () => {
-      fotos[id] = { dataURL: e.target.result, w: img.naturalWidth, h: img.naturalHeight };
+      // Comprimir: máximo 1000px, calidad 70% — evita error de memoria
+      const MAX = 1000;
+      let w = img.naturalWidth, h = img.naturalHeight;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.70);
+      canvas.width = 1; canvas.height = 1; // liberar memoria
+      fotos[id] = { dataURL: compressed, w, h };
       refreshFotoUI(id);
     };
     img.src = e.target.result;
